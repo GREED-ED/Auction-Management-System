@@ -73,7 +73,7 @@ Auction-Platform/
 
 ## 📸 ScreenShots
 
-Some of the UML Diagram for the Auction Management System are [here](https://github.com/GREED-ED/Academic/blob/main/CSIT/5th%20sem/SAD/UML.md)
+Some of the UML Diagrams for the Auction Management System are [here](https://github.com/GREED-ED/Academic/blob/main/CSIT/5th%20sem/SAD/UML.md)
 
 ---
 
