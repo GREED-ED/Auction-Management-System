@@ -88,7 +88,7 @@ Before you begin, make sure you have:
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/your-username/Auction-Platform.git
+git clone https://github.com/GREED-ED/Auction-Management-System.git
 cd Auction-Platform
 npm install
 ```
