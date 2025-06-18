@@ -81,73 +81,7 @@
         addBtn.classList.remove('d-none');
         addBtn.addEventListener('click', () => modal.show());
       
-        /* // Create auction form submission
-        document.getElementById('auctionForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-      
-          const form = e.target;
-          const body = {
-            title: form.title.value,
-            description: form.description.value,
-            startPrice: form.startPrice.value,
-          };
-      
-          try {
-            const res = await fetch('http://localhost:3000/api/auctions/create', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify(body)
-            });
-      
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
-            modal.hide();
-            loadAuctions();
-          } catch (err) {
-            alert('Failed to create auction: ' + err.message);
-          }
-        });
-        
-        // Edit auction functionality
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-        
-          const body = {
-            title: form.title.value,
-            description: form.description.value,
-            startPrice: form.startPrice.value,
-          };
-        
-          const url = editingAuctionId
-            ? `http://localhost:3000/api/auctions/${editingAuctionId}/edit`
-            : 'http://localhost:3000/api/auctions/create';
-        
-          const method = editingAuctionId ? 'PUT' : 'POST';
-        
-          try {
-            const res = await fetch(url, {
-              method,
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify(body)
-            });
-        
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
-        
-            editingAuctionId = null;
-            form.reset();
-            modal.hide();
-            loadAuctions();
-          } catch (err) {
-            alert((editingAuctionId ? 'Edit' : 'Create') + ' failed: ' + err.message);
-          }
-        }); */
+
         
         const form = document.getElementById('auctionForm');
 
