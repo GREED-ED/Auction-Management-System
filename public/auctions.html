@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auctions</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container my-5">
+    <div class="d-flex justify-content-between mb-4">
+      <h2>Available Auctions</h2>
+      <p>
+        <span id="user-role" class="badge bg-secondary"></span>
+        <span id="seller" class="badge bg-primary"></span>
+        <span id="bidder" class="badge bg-warning text-dark"></span>
+      </p>
+      <button id="add-auction-btn" class="btn btn-success d-none">+ Add Auction</button>
+    </div>
+    <nav class="navbar navbar-light bg-light justify-content-between px-4">
+        <a class="navbar-brand">Auction Platform</a>
+        <button id="logoutBtn" class="btn btn-outline-danger">Logout</button>
+      </nav>
+      
+    <div id="auction-list" class="row gy-4"></div>
+  </div>
+
+  <!-- Add Auction Modal -->
+  <div class="modal fade" id="auctionModal" tabindex="-1" aria-labelledby="auctionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="auctionForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="auctionModalLabel">Add Auction</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="text" name="title" class="form-control mb-3" placeholder="Title" required>
+            <textarea name="description" class="form-control mb-3" placeholder="Description" required></textarea>
+            <input type="number" name="startPrice" class="form-control mb-3" placeholder="Start Price" required>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Create Auction</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('token');
+        const userId = parseJwt(token)?.id;
+        
+        let editingAuctionId = null;
+        //tyo top ma role dekhauna 
+        const user = parseJwt(token);
+        console.log('Decoded JWT user:', user);
+
+        const sellerSpan = document.getElementById('seller');
+        const bidderSpan = document.getElementById('bidder');
+        const roles = user.role;
+
+        const usernameSpan = document.createElement('span');
+        usernameSpan.className = 'me-3 fw-bold text-primary';
+        usernameSpan.textContent = 'Welcome, ' + user.username || 'Unknown User';
+        document.querySelector('.d-flex.mb-4').prepend(usernameSpan);
+
+        if (roles.includes('seller')) {
+          sellerSpan.innerText = 'Seller';
+        }
+        if (roles.includes('bidder')) {
+          bidderSpan.innerText = 'Bidder';
+        }
+
+        const addBtn = document.getElementById('add-auction-btn');
+        const modal = new bootstrap.Modal(document.getElementById('auctionModal'));
+      
+        // Always show "Add Auction" button
+        addBtn.classList.remove('d-none');
+        addBtn.addEventListener('click', () => modal.show());
+      
+        /* // Create auction form submission
+        document.getElementById('auctionForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+      
+          const form = e.target;
+          const body = {
+            title: form.title.value,
+            description: form.description.value,
+            startPrice: form.startPrice.value,
+          };
+      
+          try {
+            const res = await fetch('http://localhost:3000/api/auctions/create', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify(body)
+            });
+      
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            modal.hide();
+            loadAuctions();
+          } catch (err) {
+            alert('Failed to create auction: ' + err.message);
+          }
+        });
+        
+        // Edit auction functionality
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+        
+          const body = {
+            title: form.title.value,
+            description: form.description.value,
+            startPrice: form.startPrice.value,
+          };
+        
+          const url = editingAuctionId
+            ? `http://localhost:3000/api/auctions/${editingAuctionId}/edit`
+            : 'http://localhost:3000/api/auctions/create';
+        
+          const method = editingAuctionId ? 'PUT' : 'POST';
+        
+          try {
+            const res = await fetch(url, {
+              method,
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify(body)
+            });
+        
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+        
+            editingAuctionId = null;
+            form.reset();
+            modal.hide();
+            loadAuctions();
+          } catch (err) {
+            alert((editingAuctionId ? 'Edit' : 'Create') + ' failed: ' + err.message);
+          }
+        }); */
+        
+        const form = document.getElementById('auctionForm');
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const body = {
+            title: form.title.value,
+            description: form.description.value,
+            startPrice: form.startPrice.value,
+          };
+
+          const url = editingAuctionId
+            ? `http://localhost:3000/api/auctions/${editingAuctionId}/edit`
+            : 'http://localhost:3000/api/auctions/create';
+
+          const method = editingAuctionId ? 'PUT' : 'POST';
+
+          try {
+            const res = await fetch(url, {
+              method,
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify(body)
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            editingAuctionId = null;
+            form.reset();
+            modal.hide();
+            loadAuctions();
+          } catch (err) {
+            alert((editingAuctionId ? 'Edit' : 'Create') + ' failed: ' + err.message);
+          }
+        });
+
+        // Close modal and reset form
+        document.querySelector('.btn-close').addEventListener('click', () => {
+          editingAuctionId = null;
+          form.reset();
+        });
+        
+      
+        loadAuctions();
+      
+        async function loadAuctions() {
+          try {
+            const res = await fetch('http://localhost:3000/api/auctions', {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+      
+            const data = await res.json();
+            renderAuctions(data);
+          } catch (err) {
+            alert('Failed to fetch auctions');
+          }
+        }
+      
+        function renderAuctions(auctions) {
+          const list = document.getElementById('auction-list');
+          list.innerHTML = '';
+      
+          auctions.forEach(auction => {
+            
+            const highestBid = auction.bids?.length ? Math.max(...auction.bids.map(b => b.amount)): auction.startPrice;
+            const isSeller = roles.includes('seller');
+
+            const card = document.createElement('div');
+            card.className = 'col-md-4';
+            card.innerHTML = `
+              <div class="card shadow">
+                <div class="card-body">
+                  <h5>${auction.title}</h5>
+                  <p class="text-muted">${auction.description}</p>
+                  <p><strong>Seller:</strong> ${auction.sellerId?.username || 'Unknown'}</p>
+                  <p><strong>Status:</strong> ${auction.isOpen ? '🟢 Open' : '🔴 Closed'}</p>
+                  <p><strong>Current Bid:</strong> $${highestBid}</p>
+      
+                  ${!auction.isOpen && auction.winner ? `
+                    <p class="text-success"><strong>Winner:</strong> ${auction.winner.username} ($${auction.winner.amount})</p>
+                  ` : ''}
+            
+                  ${auction.isOpen ? `
+                    <div class="input-group mb-2">
+                      <input type="number" class="form-control bid-amount" placeholder="Your bid">
+                      <button class="btn btn-outline-primary bid-btn" data-id="${auction._id}">Bid</button>
+                    </div>
+                    <button class="btn btn-danger close-btn w-100" data-id="${auction._id}">Close Auction</button>
+                  ` : ''}
+                  ${isSeller ? `
+                    <button class="btn btn-outline-secondary edit-btn w-100 my-1" data-id="${auction._id}" data-title="${auction.title}" data-description="${auction.description}" data-price="${auction.startPrice}">Edit</button>
+                    <button class="btn btn-outline-danger delete-btn w-100" data-id="${auction._id}">Delete</button>
+                  ` : ''}
+                  
+                </div>
+              </div>
+            `;
+              
+            list.appendChild(card);
+            if (isSeller) {
+              card.querySelector('.edit-btn').addEventListener('click', () => {
+                editingAuctionId = auction._id;
+                document.querySelector('#auctionModalLabel').textContent = 'Edit Auction';
+                form.title.value = auction.title;
+                form.description.value = auction.description;
+                form.startPrice.value = auction.startPrice;
+                modal.show();
+              });
+            
+              card.querySelector('.delete-btn').addEventListener('click', async () => {
+                if (!confirm('Are you sure you want to delete this auction?')) return;
+            
+                try {
+                  const res = await fetch(`http://localhost:3000/api/auctions/${auction._id}`, {
+                    method: 'DELETE',
+                    headers: {
+                      Authorization: `Bearer ${token}`
+                    }
+                  });
+            
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.message);
+            
+                  alert('Auction deleted');
+                  loadAuctions();
+                } catch (err) {
+                  alert('Delete failed: ' + err.message);
+                }
+              });
+            }
+            
+          });
+      
+          // Bid
+          document.querySelectorAll('.bid-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.id;
+              const amount = btn.closest('.input-group').querySelector('.bid-amount').value;
+      
+              if (!amount) return alert('Enter a valid bid');
+      
+              try {
+                const res = await fetch(`http://localhost:3000/api/auctions/${id}/bid`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                  },
+                  body: JSON.stringify({ amount })
+                });
+      
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                alert('Bid placed!');
+                loadAuctions();
+              } catch (err) {
+                alert('Bid failed: ' + err.message);
+              }
+            });
+          });
+      
+          // Close
+          document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.id;
+      
+              try {
+                const res = await fetch(`http://localhost:3000/api/auctions/${id}/close`, {
+                  method: 'PUT',
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
+                });
+      
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                alert('Auction closed');
+                loadAuctions();
+              } catch (err) {
+                alert('Close failed: ' + err.message);
+              }
+            });
+          });
+        }
+        
+        /*// Edit Auction
+        let editingAuctionId = null;
+
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+        editingAuctionId = btn.dataset.id;
+        document.querySelector('#auctionModalLabel').textContent = 'Edit Auction';
+        const form = document.getElementById('auctionForm');
+        form.title.value = btn.dataset.title;
+        form.description.value = btn.dataset.description;
+        form.startPrice.value = btn.dataset.price;
+        modal.show();
+        });
+      });
+
+      //delete
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (!confirm('Are you sure you want to delete this auction?')) return;
+      
+          try {
+            const res = await fetch(`http://localhost:3000/api/auctions/${id}`, {
+              method: 'DELETE',
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
+      
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+      
+            alert('Auction deleted');
+            loadAuctions();
+          } catch (err) {
+            alert('Delete failed: ' + err.message);
+          }
+        });
+      });*/
+      
+
+        function parseJwt(token) {
+          try {
+            return JSON.parse(atob(token.split('.')[1])); //Bearer lai xodera paxadi ko matra
+          } catch {
+            return {};
+          }
+        }
+      });
+
+        // Logout function
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+          localStorage.removeItem('token'); // Remove JWToken
+          alert('Logged out successfully');
+          window.location.href = 'login.html'; // login page ma redirect
+        });
+      
+  </script>
+
+</body>
+
+</html>
