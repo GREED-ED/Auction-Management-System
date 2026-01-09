@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Detail | Auction Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+
+<body>
+    <div id="toast-container"></div>
+    <nav class="navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary fs-4" href="index.html">Auction Management System</a>
+            <div id="nav-actions" class="d-flex align-items-center gap-3">
+                <a href="auctions.html" class="btn btn-outline-primary btn-sm">Back to Auctions</a>
+                <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-5">
+        <div id="auction-detail" class="row g-5">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <form id="editForm">
+                    <div class="modal-header border-bottom-0 pb-0">
+                        <h5 class="modal-title fw-bold">Edit Auction</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Item Title</label>
+                            <input type="text" name="title" id="edit-title" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Description</label>
+                            <textarea name="description" id="edit-description" class="form-control" rows="3"
+                                required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Starting Price ($)</label>
+                            <input type="number" name="startPrice" id="edit-price" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Change Images (Up to 5)</label>
+                            <input type="file" name="images" id="editImageInput" class="form-control mb-2"
+                                accept="image/*" multiple>
+                            <div id="editImagePreview" class="row g-2 mt-2 d-none">
+                                <!-- Previews will go here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="submit" id="editSubmitBtn" class="btn btn-primary px-4 w-100">
+                            <span id="editBtnText">Update Auction</span>
+                            <span id="editBtnSpinner" class="spinner-border spinner-border-sm d-none"
+                                role="status"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-top py-4 mt-auto">
+        <div class="container text-center text-muted small">
+            Copyright &copy; 2026 &mdash; Auction Management System
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            const icons = { success: 'bi-check-circle-fill', error: 'bi-exclamation-circle-fill', info: 'bi-info-circle-fill' };
+            toast.innerHTML = `<div class="icon"><i class="bi ${icons[type]}"></i></div><div class="message">${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        let editModal;
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            const urlParams = new URLSearchParams(window.location.search);
+            const auctionId = urlParams.get('id');
+
+            if (!auctionId) {
+                window.location.href = 'auctions.html';
+                return;
+            }
+
+            const user = parseJwt(token);
+            const roles = user.role || '';
+
+            try {
+                const res = await fetch(`/api/auctions/${auctionId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const auction = await res.json();
+                if (!res.ok) throw new Error(auction.message);
+
+                renderDetail(auction, user, roles);
+            } catch (err) {
+                document.getElementById('auction-detail').innerHTML = `<div class="col-12 text-center text-danger">${err.message}</div>`;
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+            });
+
+            document.getElementById('editForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('editSubmitBtn');
+                const btnText = document.getElementById('editBtnText');
+                const btnSpinner = document.getElementById('editBtnSpinner');
+
+                submitBtn.disabled = true;
+                btnText.textContent = 'Updating...';
+                btnSpinner.classList.remove('d-none');
+
+                const formData = new FormData(e.target);
+                try {
+                    const res = await fetch(`/api/auctions/${auctionId}/edit`, {
+                        method: 'PUT',
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: formData
+                    });
+                    if (res.ok) {
+                        showToast('Auction updated successfully!', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
+                    else showToast('Update failed', 'error');
+                } catch (err) { showToast(err.message, 'error'); }
+                finally {
+                    submitBtn.disabled = false;
+                    btnText.textContent = 'Update Auction';
+                    btnSpinner.classList.add('d-none');
+                }
+            });
+        });
+
+        function renderDetail(auction, user, roles) {
+            const container = document.getElementById('auction-detail');
+            const highestBid = auction.bids?.length ? Math.max(...auction.bids.map(b => b.amount)) : auction.startPrice;
+            const isSellerOfThis = auction.sellerId?._id === user.id;
+
+            const allImages = (auction.images && auction.images.length > 0) ? auction.images : [auction.image || 'https://placehold.co/800x600?text=No+Image'];
+
+            let timeContent = '';
+            if (auction.isOpen && auction.endTime) {
+                timeContent = `<div class="d-flex align-items-center gap-2 text-warning fw-bold">
+                                <i class="bi bi-clock"></i> <span id="timer" data-endtime="${auction.endTime}">Loading...</span>
+                               </div>`;
+            } else if (!auction.isOpen) {
+                timeContent = `<div class="badge bg-danger px-3 py-2 fs-6">Closed</div>`;
+            }
+
+            container.innerHTML = `
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-sm overflow-hidden rounded-4 mb-3">
+                        <img id="main-display-img" src="${allImages[0].startsWith('http') ? allImages[0] : '' + allImages[0]}" 
+                             class="img-fluid w-100" alt="${auction.title}" style="height: 500px; object-fit: cover;">
+                    </div>
+                    ${allImages.length > 1 ? `
+                        <div class="row g-2">
+                            ${allImages.map((img, idx) => `
+                                <div class="col-2">
+                                    <img src="${img.startsWith('http') ? img : '' + img}" 
+                                         class="img-fluid rounded border cursor-pointer thumbnail-img ${idx === 0 ? 'border-primary' : ''}" 
+                                         style="height: 80px; width: 100%; object-fit: cover; cursor: pointer;"
+                                         onclick="updateMainImage(this, '${img.startsWith('http') ? img : '' + img}')">
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="col-lg-5">
+                    <div class="ps-lg-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h1 class="fw-bold mb-1">${auction.title}</h1>
+                                <p class="text-muted">Seller: <span class="text-dark fw-medium">${auction.sellerId?.username || 'Unknown'}</span></p>
+                            </div>
+                            <span class="badge ${auction.isOpen ? 'bg-success' : 'bg-secondary'} px-3 py-2">${auction.isOpen ? 'Active' : 'Ended'}</span>
+                        </div>
+
+                        ${isSellerOfThis ? `
+                            <div class="d-flex gap-2 mb-4">
+                                <button class="btn btn-outline-secondary btn-sm px-3" onclick="openEditModal('${auction.title}', '${auction.description}', ${auction.startPrice})">
+                                    <i class="bi bi-pencil me-1"></i> Edit
+                                </button>
+                                ${auction.isOpen ? `
+                                    <button class="btn btn-outline-danger btn-sm px-3" onclick="closeAuction('${auction._id}')">
+                                        <i class="bi bi-x-circle me-1"></i> Close Auction
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-danger btn-sm px-3" onclick="deleteAuction('${auction._id}')">
+                                    <i class="bi bi-trash me-1"></i> Delete
+                                </button>
+                            </div>
+                        ` : ''}
+
+                        <div class="bg-light p-4 rounded-4 border mb-4">
+                            <div class="row align-items-center">
+                                <div class="col-sm-6 mb-3 mb-sm-0 text-center text-sm-start">
+                                    <small class="text-muted d-block mb-1">Current Highest Bid</small>
+                                    <h2 class="text-primary fw-bold mb-0">$${highestBid}</h2>
+                                </div>
+                                <div class="col-sm-6 text-center text-sm-end">
+                                    ${timeContent}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h5 class="fw-bold mb-3">Description</h5>
+                            <p class="text-muted lh-lg">${auction.description}</p>
+                        </div>
+
+                        ${auction.isOpen && roles.includes('bidder') ? `
+                            <div class="card border-0 shadow-sm p-4 rounded-4 mb-4">
+                                <h5 class="fw-bold mb-3">Place Your Bid</h5>
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">$</span>
+                                    <input type="number" id="bid-amount" class="form-control border-start-0 ps-0" placeholder="Min $${highestBid + 1}" required>
+                                    <button class="btn btn-primary px-4" onclick="placeBid('${auction._id}')">Confirm Bid</button>
+                                </div>
+                                <small class="text-muted">By placing a bid, you agree to our terms and conditions.</small>
+                            </div>
+                        ` : ''}
+
+                        ${auction.isOpen && !roles.includes('bidder') ? `
+                            <div class="alert alert-info border-0 rounded-4">
+                                <i class="bi bi-info-circle me-2"></i> Only registered bidders can place bids on items.
+                            </div>
+                        ` : ''}
+
+                        ${!auction.isOpen && auction.winner ? `
+                            <div class="card border-0 bg-success bg-opacity-10 p-4 rounded-4 mb-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-success text-white p-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-trophy-fill fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-0 text-success">Winning Bidder</h5>
+                                        <p class="mb-0 text-success opacity-75">${auction.winner.username} won with a bid of $${auction.winner.amount}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div class="mt-5">
+                            <h5 class="fw-bold mb-4">Bid History (${auction.bids?.length || 0})</h5>
+                            <div id="bid-history" class="list-group list-group-flush border-top">
+                                ${auction.bids?.length ? auction.bids.reverse().map(bid => `
+                                    <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center bg-transparent">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="avatar-sm bg-light rounded-circle text-muted d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <i class="bi bi-person"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">${bid.userId?.username || 'Previous Bidder'}</h6>
+                                                <small class="text-muted">${new Date(bid.time).toLocaleString()}</small>
+                                            </div>
+                                        </div>
+                                        <span class="fw-bold text-dark">$${bid.amount}</span>
+                                    </div>
+                                `).join('') : '<p class="text-muted py-3">No bids yet. Be the first!</p>'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            startTimer();
+        }
+
+        function openEditModal(title, desc, price) {
+            document.getElementById('edit-title').value = title;
+            document.getElementById('edit-description').value = desc;
+            document.getElementById('edit-price').value = price;
+            const previewGrid = document.getElementById('editImagePreview');
+            previewGrid.innerHTML = '';
+            previewGrid.classList.add('d-none');
+            editModal.show();
+        }
+
+        document.getElementById('editImageInput')?.addEventListener('change', function (e) {
+            const previewGrid = document.getElementById('editImagePreview');
+            previewGrid.innerHTML = '';
+            const files = Array.from(e.target.files);
+
+            if (files.length > 0) {
+                previewGrid.classList.remove('d-none');
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-4';
+                        col.innerHTML = `
+                            <div class="position-relative">
+                                <img src="${e.target.result}" class="img-fluid rounded border shadow-sm" style="height: 60px; width: 100%; object-fit: cover;">
+                            </div>
+                        `;
+                        previewGrid.appendChild(col);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                previewGrid.classList.add('d-none');
+            }
+        });
+
+        function updateMainImage(el, src) {
+            document.getElementById('main-display-img').src = src;
+            document.querySelectorAll('.thumbnail-img').forEach(t => t.classList.remove('border-primary'));
+            el.classList.add('border-primary');
+        }
+
+        async function closeAuction(id) {
+            if (!confirm('Close this auction?')) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`/api/auctions/${id}/close`, {
+                    method: 'PUT',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    showToast('Auction closed!', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+            } catch (err) { showToast('Failed to close', 'error'); }
+        }
+
+        async function deleteAuction(id) {
+            if (!confirm('Are you sure you want to delete this auction?')) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`/api/auctions/${id}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    showToast('Auction deleted!', 'success');
+                    setTimeout(() => window.location.href = 'auctions.html', 1000);
+                }
+            } catch (err) { showToast('Delete failed', 'error'); }
+        }
+
+        async function placeBid(id) {
+            const amount = document.getElementById('bid-amount').value;
+            const token = localStorage.getItem('token');
+            if (!amount) return showToast('Please enter a bid amount', 'error');
+
+            try {
+                const res = await fetch(`/api/auctions/${id}/bid`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ amount })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+
+                showToast('Success! Your bid has been placed.', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function startTimer() {
+            const el = document.getElementById('timer');
+            if (!el) return;
+
+            const interval = setInterval(() => {
+                const end = new Date(el.dataset.endtime).getTime();
+                const now = new Date().getTime();
+                const diff = end - now;
+
+                if (diff <= 0) {
+                    el.innerHTML = 'Ended';
+                    clearInterval(interval);
+                    window.location.reload();
+                } else {
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+                    el.textContent = `${h}h ${m}m ${s}s`;
+                }
+            }, 1000);
+        }
+
+        function parseJwt(token) {
+            try { return JSON.parse(atob(token.split('.')[1])); } catch { return {}; }
+        }
+    </script>
+</body>
+
+</html>

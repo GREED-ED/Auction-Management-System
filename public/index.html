@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Management System | Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+
+<body>
+    <nav class="navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary fs-4" href="index.html">Auction Management System</a>
+            <div id="nav-actions" class="d-flex align-items-center gap-3">
+                <!-- Actions will be injected here -->
+            </div>
+        </div>
+    </nav>
+
+    <header class="py-5 bg-light border-bottom">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h1 class="display-5 fw-bold text-dark mb-3">
+                        Welcome to <span class="text-primary">Auction Management System</span>
+                    </h1>
+                    <p class="lead text-muted mb-4">
+                        Buy and sell unique items through our secure online auction platform.
+                    </p>
+                    <div id="hero-actions" class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                        <!-- Buttons will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container py-5 my-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">How It Works</h2>
+            <p class="text-muted">Simple steps to get you started</p>
+        </div>
+        <div class="row g-4 text-center">
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 shadow-sm">
+                    <div class="bg-primary text-white p-3 rounded-circle d-inline-flex align-items-center justify-content-center mb-4 mx-auto"
+                        style="width: 64px; height: 64px;">
+                        <i class="bi bi-person-plus fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Create Account</h5>
+                    <p class="text-muted small">Sign up as a bidder or seller in seconds.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 shadow-sm">
+                    <div class="bg-primary text-white p-3 rounded-circle d-inline-flex align-items-center justify-content-center mb-4 mx-auto"
+                        style="width: 64px; height: 64px;">
+                        <i class="bi bi-search fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Browse Auctions</h5>
+                    <p class="text-muted small">Explore a wide catalog of unique items.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border-0 shadow-sm">
+                    <div class="bg-primary text-white p-3 rounded-circle d-inline-flex align-items-center justify-content-center mb-4 mx-auto"
+                        style="width: 64px; height: 64px;">
+                        <i class="bi bi-hammer fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Place Your Bid</h5>
+                    <p class="text-muted small">Compete fairly and win the items you love.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-top py-4">
+        <div class="container text-center text-muted small">
+            Copyright &copy; 2026 &mdash; Auction Management System
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const navActions = document.getElementById('nav-actions');
+            const heroActions = document.getElementById('hero-actions');
+
+            if (token) {
+                const user = parseJwt(token);
+                // Logged In
+                navActions.innerHTML = `
+                    <span class="text-muted small fw-medium">Hello, ${user.username || 'User'}</span>
+                    <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Logout</button>
+                `;
+                heroActions.innerHTML = `
+                    <a href="auctions.html" class="btn btn-primary btn-lg px-5 shadow-sm">Explore Live Auctions</a>
+                `;
+
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.reload();
+                });
+            } else {
+                // Logged Out
+                navActions.innerHTML = `
+                    <a href="login.html" class="text-primary text-decoration-none small fw-bold">Login</a>
+                    <a href="signup.html" class="btn btn-primary btn-sm px-4">Get Started</a>
+                `;
+                heroActions.innerHTML = `
+                    <a href="signup.html" class="btn btn-primary btn-lg px-5 shadow-sm">Join Now</a>
+                    <a href="login.html" class="btn btn-outline-primary btn-lg px-5">Login</a>
+                `;
+            }
+        });
+
+        function parseJwt(token) {
+            try { return JSON.parse(atob(token.split('.')[1])); } catch { return {}; }
+        }
+    </script>
+</body>
+
+</html>

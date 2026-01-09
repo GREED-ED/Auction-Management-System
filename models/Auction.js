@@ -1,34 +1,37 @@
 const mongoose = require('mongoose');
 
 const auctionSchema = new mongoose.Schema({
-  title: String,  
+  title: String,
   description: String,
   startPrice: Number,
-  sellerId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User' 
+  endTime: Date,
+  sellerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
   bids: [{
-    userId: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'User' 
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     },
     amount: Number,
     time: { type: Date, default: Date.now }
   }],
-  isOpen: { 
+  isOpen: {
     type: Boolean,
-    default: true 
+    default: true
   },
   winner: {
-    userId: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'User' 
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     },
     username: String,
     amount: Number
-  }
-  
+  },
+  image: String,
+  images: [String]
+
 });
 
 
