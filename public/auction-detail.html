@@ -52,7 +52,7 @@
                                 required></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-muted">Starting Price ($)</label>
+                            <label class="form-label small fw-bold text-muted">Starting Price (Rs.)</label>
                             <input type="number" name="startPrice" id="edit-price" class="form-control" required>
                         </div>
                         <div class="mb-3">
@@ -230,7 +230,7 @@
                             <div class="row align-items-center">
                                 <div class="col-sm-6 mb-3 mb-sm-0 text-center text-sm-start">
                                     <small class="text-muted d-block mb-1">Current Highest Bid</small>
-                                    <h2 class="text-primary fw-bold mb-0">$${highestBid}</h2>
+                                    <h2 class="text-primary fw-bold mb-0">Rs.${highestBid}</h2>
                                 </div>
                                 <div class="col-sm-6 text-center text-sm-end">
                                     ${timeContent}
@@ -245,10 +245,9 @@
 
                         ${auction.isOpen && roles.includes('bidder') ? `
                             <div class="card border-0 shadow-sm p-4 rounded-4 mb-4">
-                                <h5 class="fw-bold mb-3">Place Your Bid</h5>
                                 <div class="input-group mb-3">
-                                    <span class="input-group-text bg-white border-end-0 text-muted">$</span>
-                                    <input type="number" id="bid-amount" class="form-control border-start-0 ps-0" placeholder="Min $${highestBid + 1}" required>
+                                    <span class="input-group-text bg-white border-end-0 text-muted">Rs.</span>
+                                    <input type="number" id="bid-amount" class="form-control border-start-0 ps-0" placeholder="Min Rs.${highestBid + 1}" required>
                                     <button class="btn btn-primary px-4" onclick="placeBid('${auction._id}')">Confirm Bid</button>
                                 </div>
                                 <small class="text-muted">By placing a bid, you agree to our terms and conditions.</small>
@@ -269,7 +268,7 @@
                                     </div>
                                     <div>
                                         <h5 class="fw-bold mb-0 text-success">Winning Bidder</h5>
-                                        <p class="mb-0 text-success opacity-75">${auction.winner.username} won with a bid of $${auction.winner.amount}</p>
+                                        <p class="mb-0 text-success opacity-75">${auction.winner.username} won with a bid of Rs.${auction.winner.amount}</p>
                                     </div>
                                 </div>
                             </div>
@@ -289,7 +288,7 @@
                                                 <small class="text-muted">${new Date(bid.time).toLocaleString()}</small>
                                             </div>
                                         </div>
-                                        <span class="fw-bold text-dark">$${bid.amount}</span>
+                                        <span class="fw-bold text-dark">Rs.${bid.amount}</span>
                                     </div>
                                 `).join('') : '<p class="text-muted py-3">No bids yet. Be the first!</p>'}
                             </div>
@@ -408,10 +407,11 @@
                     clearInterval(interval);
                     window.location.reload();
                 } else {
+                    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
                     const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((diff % (1000 * 60)) / 1000);
-                    el.textContent = `${h}h ${m}m ${s}s`;
+                    el.textContent = `${d > 0 ? d + 'd ' : ''}${h}h ${m}m ${s}s`;
                 }
             }, 1000);
         }

@@ -64,7 +64,7 @@
             </div>
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold text-muted">Starting Price ($)</label>
+                <label class="form-label small fw-bold text-muted">Starting Price (Rs.)</label>
                 <input type="number" name="startPrice" class="form-control" placeholder="0.00" required>
               </div>
               <div class="col-md-6 mb-3">
@@ -273,7 +273,7 @@
                   </h5>
                   <div class="text-end">
                     <small class="text-muted d-block">Current Bid</small>
-                    <span class="fw-bold text-primary">$${highestBid}</span>
+                    <span class="fw-bold text-primary">Rs.${highestBid}</span>
                   </div>
                 </div>
                 <p class="card-text text-muted small mb-3">${auction.description.substring(0, 100)}${auction.description.length > 100 ? '...' : ''}</p>
@@ -286,13 +286,13 @@
 
                 ${!auction.isOpen && auction.winner ? `
                   <div class="bg-light p-2 rounded small mb-3 border">
-                    <strong>Winner:</strong> ${auction.winner.username} ($${auction.winner.amount})
+                    <strong>Winner:</strong> ${auction.winner.username} (Rs.${auction.winner.amount})
                   </div>
                 ` : ''}
 
                 ${auction.isOpen ? (roles.includes('bidder') ? `
                   <div class="input-group mb-2">
-                    <input type="number" class="form-control form-control-sm bid-amount" placeholder="Min $${highestBid + 1}">
+                    <input type="number" class="form-control form-control-sm bid-amount" placeholder="Min Rs.${highestBid + 1}">
                     <button class="btn btn-primary btn-sm bid-btn" data-id="${auction._id}">Place Bid</button>
                   </div>
                 ` : `
@@ -397,10 +397,11 @@
             el.innerHTML = '<span class="text-danger small">Ended</span>';
             el.classList.remove('timer');
           } else {
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
             const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const s = Math.floor((diff % (1000 * 60)) / 1000);
-            el.textContent = `${h}h ${m}m ${s}s`;
+            el.textContent = `${d > 0 ? d + 'd ' : ''}${h}h ${m}m ${s}s`;
           }
         });
       }, 1000);

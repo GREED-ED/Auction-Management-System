@@ -167,7 +167,7 @@ router.post('/:id/bid', authMiddleware, async (req, res) => {
     const highestBid = auction.bids.length > 0 ? Math.max(...auction.bids.map(b => b.amount)) : auction.startPrice;
 
     if (amount <= highestBid) {
-      return res.status(400).json({ message: `Bid must be higher than current highest bid: ${highestBid}` });
+      return res.status(400).json({ message: `Bid must be higher than current highest bid: Rs.${highestBid}` });
     }
 
     // Add new bid
